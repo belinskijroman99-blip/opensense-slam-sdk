@@ -1,6 +1,6 @@
 <div align="center">
 
-# Neuronav SLAM SDK
+# Opensense SLAM SDK
 
 **The SLAM Abstraction Layer for Robotics Platforms**
 
