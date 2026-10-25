@@ -50,6 +50,7 @@ class ORBSLAM3(SlamBase):
         self._stereo_right_topic: str = "/camera/right/image_raw"
         self._imu_topic: str = "/imu/data"
         self._enable_pangolin_viewer: bool = False
+        self._queue_size: int = 50
         self._is_running = False
 
     def configure(self, config: SlamConfig) -> None:
@@ -87,6 +88,8 @@ class ORBSLAM3(SlamBase):
                 self._stereo_right_topic = custom["stereo_right_topic"]
             if "enable_viewer" in custom:
                 self._enable_pangolin_viewer = bool(custom["enable_viewer"])
+            if "queue_size" in custom:
+                self._queue_size = int(custom["queue_size"])
 
     def set_sensor_topics(self, topics: Dict[str, str]) -> None:
         """
@@ -150,6 +153,7 @@ class ORBSLAM3(SlamBase):
             "-p", f"imu_topic:={self._imu_topic}",
             "-p", f"world_frame_id:={self._world_frame}",
             "-p", f"camera_frame_id:={self._camera_frame}",
+            "-p", f"queue_size:={self._queue_size}",
             "-p", f"enable_pangolin_viewer:={'true' if self._enable_pangolin_viewer else 'false'}"
         ]
 

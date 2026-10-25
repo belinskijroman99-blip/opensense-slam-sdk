@@ -46,7 +46,7 @@ To prevent zombie and orphaned processes in long-running Linux deployments, the 
 
 ### C++ Zero-Copy Buffering & Frame Synchronization
 * **Zero-Copy cv_bridge**: Inbound image messages are converted via `cv_bridge::toCvShare` instead of `cv_bridge::toCvCopy`. This maps raw shared memory directly into `cv::Mat` headers, preventing continuous heap allocations and cache thrashing during high-framerate (30–60 FPS) streams.
-* **ApproximateTime Synchronization**: Visual and depth/stereo streams from RealSense or stereo rigs frequently experience slight millisecond sensor clock skews. The node implements `message_filters::Synchronizer` with `message_filters::sync_policies::ApproximateTime` (queue size 10), matching frame pairs by proximity within timestamp thresholds without dropping synchronized cycles.
+* **ApproximateTime Synchronization**: Visual and depth/stereo streams from RealSense or stereo rigs frequently experience slight millisecond sensor clock skews. The node implements `message_filters::Synchronizer` with `message_filters::sync_policies::ApproximateTime` (configurable `queue_size`, default 50 frames), matching frame pairs by proximity within timestamp thresholds and preventing frame drops under heavy USB 3.0 / system loads.
 * **Thread-Safe State Machine**: Tracking calls (`TrackMonocular`, `TrackStereo`, `TrackRGBD`) are guarded via `std::lock_guard<std::mutex> mutex_track_`, isolating image intake from asynchronous trajectory queries.
 
 ### Python State Synchronization

@@ -38,6 +38,7 @@ public:
         this->declare_parameter<std::string>("imu_topic", "/imu/data");
         this->declare_parameter<std::string>("world_frame_id", "map");
         this->declare_parameter<std::string>("camera_frame_id", "camera_link");
+        this->declare_parameter<int>("queue_size", 50);
 
         vocab_file_ = this->get_parameter("vocab_file").as_string();
         settings_file_ = this->get_parameter("settings_file").as_string();
@@ -51,6 +52,7 @@ public:
         imu_topic_ = this->get_parameter("imu_topic").as_string();
         world_frame_id_ = this->get_parameter("world_frame_id").as_string();
         camera_frame_id_ = this->get_parameter("camera_frame_id").as_string();
+        queue_size_ = this->get_parameter("queue_size").as_int();
 
         if (settings_file_.empty()) {
             RCLCPP_FATAL(this->get_logger(), "Parameter 'settings_file' must be specified.");
@@ -116,25 +118,25 @@ public:
             stereo_left_sub_.subscribe(this, stereo_left_topic_, custom_qos.get_rmw_qos_profile());
             stereo_right_sub_.subscribe(this, stereo_right_topic_, custom_qos.get_rmw_qos_profile());
             stereo_sync_ = std::make_shared<message_filters::Synchronizer<ApproxSyncPolicy>>(
-                ApproxSyncPolicy(10), stereo_left_sub_, stereo_right_sub_
+                ApproxSyncPolicy(queue_size_), stereo_left_sub_, stereo_right_sub_
             );
             stereo_sync_->registerCallback(
                 std::bind(&OrbSlam3Node::stereoCallback, this, std::placeholders::_1, std::placeholders::_2)
             );
-            RCLCPP_INFO(this->get_logger(), "Subscribed to Stereo topics: %s & %s",
-                        stereo_left_topic_.c_str(), stereo_right_topic_.c_str());
+            RCLCPP_INFO(this->get_logger(), "Subscribed to Stereo topics: %s & %s (ApproximateTime queue_size: %d)",
+                        stereo_left_topic_.c_str(), stereo_right_topic_.c_str(), queue_size_);
         } else {
             // Default: RGB-D / RGB-D-Inertial
             rgb_sub_.subscribe(this, rgb_topic_, custom_qos.get_rmw_qos_profile());
             depth_sub_.subscribe(this, depth_topic_, custom_qos.get_rmw_qos_profile());
             rgbd_sync_ = std::make_shared<message_filters::Synchronizer<ApproxSyncPolicy>>(
-                ApproxSyncPolicy(10), rgb_sub_, depth_sub_
+                ApproxSyncPolicy(queue_size_), rgb_sub_, depth_sub_
             );
             rgbd_sync_->registerCallback(
                 std::bind(&OrbSlam3Node::rgbdCallback, this, std::placeholders::_1, std::placeholders::_2)
             );
-            RCLCPP_INFO(this->get_logger(), "Subscribed to RGB-D topics: %s & %s",
-                        rgb_topic_.c_str(), depth_topic_.c_str());
+            RCLCPP_INFO(this->get_logger(), "Subscribed to RGB-D topics: %s & %s (ApproximateTime queue_size: %d)",
+                        rgb_topic_.c_str(), depth_topic_.c_str(), queue_size_);
         }
 
         path_msg_.header.frame_id = world_frame_id_;
@@ -326,6 +328,7 @@ private:
     std::string imu_topic_;
     std::string world_frame_id_;
     std::string camera_frame_id_;
+    int queue_size_{50};
 
     std::unique_ptr<ORB_SLAM3::System> slam_system_;
     std::mutex mutex_track_;
